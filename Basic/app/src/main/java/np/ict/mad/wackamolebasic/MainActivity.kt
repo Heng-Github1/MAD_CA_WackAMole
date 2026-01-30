@@ -1,5 +1,7 @@
 package np.ict.mad.wackamolebasic
 
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -64,6 +66,14 @@ fun GameScreen(navController: NavHostController) {
     var score by remember { mutableIntStateOf(0) }
     var remainingTime by remember { mutableIntStateOf(30) }
     var moleIndex by remember { mutableIntStateOf(-1) } // -1 means "no mole" for now
+    var gameRunning by remember { mutableStateOf(false) }
+
+    LaunchedEffect(gameRunning) {
+        while (gameRunning) {
+            moleIndex = Random.nextInt(0, 9)
+            delay(800L) // 700–1000ms is allowed
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -103,8 +113,7 @@ fun GameScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(20.dp))
 
-            // 3x3 grid of holes for the mole
-            // Mole movement will be added later
+            // 3x3 grid of holes (mole position updates while game is running)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier
@@ -115,17 +124,18 @@ fun GameScreen(navController: NavHostController) {
                 userScrollEnabled = false
             ) {
                 items(9) { index ->
-                    // Placeholder: show "M" only if index matches moleIndex (currently -1, so none shows)
+                    // Show "M" only if index matches moleIndex
                     val label = if (index == moleIndex) "M" else ""
 
                     Button(
                         onClick = {
-                            // Placeholder click handler:
-                            // To add real scoring logic later
-                            // For now temporarily set moleIndex = index to see it work
+                            if (index == moleIndex && gameRunning) {
+                                score++
+                            }
                         },
                         modifier = Modifier.size(80.dp),
-                        shape = androidx.compose.foundation.shape.CircleShape
+                        shape = CircleShape
+
                     ) {
                         Text(label)
                     }
@@ -134,11 +144,13 @@ fun GameScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(20.dp))
 
-            // Start button placeholder
+            // Start / restart game
             Button(onClick = {
                 // Placeholder: will reset score/time and start timers later
                 score = 0
                 remainingTime = 30
+                moleIndex = Random.nextInt(0, 9)
+                gameRunning = true
             }) {
                 Text("Start")
             }
