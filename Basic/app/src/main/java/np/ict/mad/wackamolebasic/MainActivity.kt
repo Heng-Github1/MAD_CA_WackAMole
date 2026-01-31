@@ -1,5 +1,7 @@
 package np.ict.mad.wackamolebasic
 
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 import android.os.Bundle
@@ -62,16 +64,49 @@ fun AppNav() {
 @Composable
 fun GameScreen(navController: NavHostController) {
 
-    // Game state variables (score, timer, mole position)
+    // Core game state
     var score by remember { mutableIntStateOf(0) }
-    var remainingTime by remember { mutableIntStateOf(30) }
-    var moleIndex by remember { mutableIntStateOf(-1) } // -1 means "no mole" for now
+    var remainingTime by remember { mutableIntStateOf(30) }   // countdown timer
+    var moleIndex by remember { mutableIntStateOf(-1) }       // which hole has the mole
     var gameRunning by remember { mutableStateOf(false) }
+    var gameOver by remember { mutableStateOf(false) }        // show game over UI
+    var moleWhacked by remember { mutableStateOf(false) }
 
+    val totalTime = 30
+
+    val context = LocalContext.current
+    var highScore by remember(context) { mutableIntStateOf(getHighScore(context)) }
+
+    // Mole movement loop (runs only when gameRunning == true)
     LaunchedEffect(gameRunning) {
         while (gameRunning) {
             moleIndex = Random.nextInt(0, 9)
-            delay(800L) // 700–1000ms is allowed
+            moleWhacked = false     // reset when a new mole appears
+            delay(800L)     // 700–1000ms allowed
+        }
+    }
+
+    // Countdown timer loop (runs only when gameRunning == true)
+    LaunchedEffect(gameRunning) {
+        while (gameRunning) {
+            delay(1000L)
+            remainingTime -= 1
+
+            if (remainingTime <= 0) {
+                // Time is up -> stop game
+                remainingTime = 0
+                gameRunning = false
+                gameOver = true
+                moleIndex = -1 // hide mole when game ends
+
+                // Update + save high score when game ends
+                if (score > highScore) {
+                    highScore = score
+                    saveHighScore(context, highScore)
+                }
+
+                break   // Make sure the while loop doesn't do extra iterations
+            }
         }
     }
 
@@ -96,8 +131,7 @@ fun GameScreen(navController: NavHostController) {
             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
         ) {
 
-            // Score and time display
-
+            // Score + time display
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -108,12 +142,12 @@ fun GameScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(8.dp))
 
-            // High score placeholder (to implement SharedPreferences later)
-            Text("High score: 0")
+            // High score
+            Text("High score: $highScore")
 
             Spacer(Modifier.height(20.dp))
 
-            // 3x3 grid of holes (mole position updates while game is running)
+            // 3x3 grid of holes (only one has the mole at a time)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier
@@ -124,18 +158,19 @@ fun GameScreen(navController: NavHostController) {
                 userScrollEnabled = false
             ) {
                 items(9) { index ->
-                    // Show "M" only if index matches moleIndex
-                    val label = if (index == moleIndex) "M" else ""
+                    val isMoleVisible = (index == moleIndex) && !moleWhacked
+                    val label = if (isMoleVisible) "M" else ""
 
                     Button(
                         onClick = {
-                            if (index == moleIndex && gameRunning) {
+                            if (gameRunning && isMoleVisible) {
                                 score++
+                                moleWhacked = true   // hide mole immediately after 1 hit
                             }
                         },
+                        enabled = gameRunning,  // keep holes enabled, no flashing (prevents epilepsy)
                         modifier = Modifier.size(80.dp),
                         shape = CircleShape
-
                     ) {
                         Text(label)
                     }
@@ -144,15 +179,23 @@ fun GameScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(20.dp))
 
-            // Start / restart game
+            // Game over message (shown only when time reaches 0)
+            if (gameOver) {
+                Text("Game over! Final score: $score")
+                Spacer(Modifier.height(12.dp))
+            }
+
+            // Start / Restart button
             Button(onClick = {
-                // Placeholder: will reset score/time and start timers later
+                // Reset game state
                 score = 0
-                remainingTime = 30
-                moleIndex = Random.nextInt(0, 9)
+                remainingTime = totalTime
+                gameOver = false
                 gameRunning = true
+                moleIndex = Random.nextInt(0, 9) // show mole immediately at start
+                moleWhacked = false
             }) {
-                Text("Start")
+                Text(if (!gameRunning && !gameOver) "Start" else "Restart")
             }
         }
     }
@@ -161,25 +204,45 @@ fun GameScreen(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavHostController) {
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Text("←")
-                    }
+                    IconButton(onClick = { navController.popBackStack() }) { Text("←") }
                 }
             )
         }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize(),
-            contentAlignment = androidx.compose.ui.Alignment.Center
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
         ) {
-            Text("Settings screen")
+            Text("Settings")
+            Spacer(Modifier.height(16.dp))
+
+            Button(onClick = { saveHighScore(context, 0) }) {
+                Text("Reset High Score")
+            }
         }
     }
+}
+
+private const val PREFS_NAME = "wack_a_mole_prefs"
+private const val KEY_HIGH_SCORE = "high_score"
+
+private fun getHighScore(context: Context): Int {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getInt(KEY_HIGH_SCORE, 0)
+}
+
+private fun saveHighScore(context: Context, newHighScore: Int) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putInt(KEY_HIGH_SCORE, newHighScore).apply()
 }
