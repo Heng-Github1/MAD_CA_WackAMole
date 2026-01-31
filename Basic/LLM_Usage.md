@@ -37,6 +37,7 @@ Update remainingTime, and when it reaches 0, stop the game and trigger game-over
 LaunchedEffect automatically cancels when gameRunning becomes false.
 
 Code snippet (Mine, before): (example of wrong approach — timer never stops / keeps restarting)
+```kotlin
 var remainingTime by remember { mutableIntStateOf(30) }
 
 LaunchedEffect(Unit) {
@@ -64,6 +65,7 @@ LaunchedEffect(gameRunning) {
         }
     }
 }
+```
 
 Why was it changed as such:
 The “before” version runs forever from the moment the screen loads (even when the game hasn’t started), 
@@ -86,14 +88,17 @@ Use context.getSharedPreferences() to save an integer high score. Read it at sta
 and write it when the game ends if the current score is higher.
 
 Code snippet (Mine, before): (example of wrong approach — high score resets whenever app restarts)
+```kotlin
 var highScore by remember { mutableIntStateOf(0) }
 
 // update high score in memory only
 if (score > highScore) {
     highScore = score
 }
+```
 
 Code snippet (Corrected code, after):
+```kotlin
 private const val PREFS_NAME = "wack_a_mole_prefs"
 private const val KEY_HIGH_SCORE = "high_score"
 
@@ -106,8 +111,10 @@ private fun saveHighScore(context: Context, newHighScore: Int) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putInt(KEY_HIGH_SCORE, newHighScore).apply()
 }
+```
 
 Usage at runtime:
+```kotlin
 val context = LocalContext.current
 var highScore by remember(context) { mutableIntStateOf(getHighScore(context)) }
 
@@ -115,6 +122,7 @@ if (score > highScore) {
     highScore = score
     saveHighScore(context, highScore)
 }
+```
 
 Why was it changed as such:
 The “before” version stores high score only in memory, so it resets after app restarts. 
@@ -137,6 +145,7 @@ which triggers visible UI transitions. Fix by avoiding rapid enabled/disabled to
 and avoid changing styles unnecessarily. Keep holes enabled during gameplay and gate scoring inside onClick.
 
 Code snippet (Mine, before): (example of wrong approach — toggling enabled makes UI flicker)
+```kotlin
 Button(
     enabled = (index == moleIndex), // only mole hole enabled
     onClick = {
@@ -144,8 +153,10 @@ Button(
         moleIndex = Random.nextInt(0, 9)
     }
 ) { Text("") }
+```
 
 Code snippet (Corrected code, after):
+```kotlin
 val isMoleVisible = (index == moleIndex) && !moleWhacked
 
 Button(
@@ -169,6 +180,7 @@ Button(
         )
     }
 }
+```
 
 Why was it changed as such:
 The “before” version constantly toggles enabled state across holes whenever the mole moves, 
@@ -191,6 +203,7 @@ Add a boolean state like moleWhacked. When the mole is tapped once, set it to tr
 disappears and additional taps don’t score. Reset moleWhacked = false when a new mole appears.
 
 Code snippet (Mine, before): (example of wrong approach — spam tapping scores repeatedly)
+```kotlin
 val isMoleVisible = (index == moleIndex)
 
 Button(onClick = {
@@ -198,8 +211,10 @@ Button(onClick = {
         score++ // tapping fast can increment multiple times before mole moves
     }
 }) { Text(if (isMoleVisible) "M" else "") }
+```
 
 Code snippet (Corrected code, after):
+```kotlin
 var moleWhacked by remember { mutableStateOf(false) }
 
 LaunchedEffect(gameRunning) {
@@ -228,6 +243,7 @@ Button(
         )
     }
 }
+```
 
 Why was it changed as such:
 The “before” version allows repeated scoring as long as the mole stays in the same position. 
