@@ -1,5 +1,7 @@
 package np.ict.mad.wackamolebasic
 
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
@@ -21,6 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import np.ict.mad.wackamolebasic.ui.theme.WackAMoleBasicTheme
+
+// Game theme colours
+private val BackgroundColor = Color(0xFFF6E3C5)   // light beige
+private val HoleColor = Color(0xFF8B4A14)         // brown holes
+private val ButtonColor = Color(0xFF8B4A14)       // brown button
+private val ButtonTextColor = Color.White
+private val TextColor = Color(0xFF3E2A1C)         // dark brown text
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,12 +120,13 @@ fun GameScreen(navController: NavHostController) {
     }
 
     Scaffold(
+        containerColor = BackgroundColor,
         topBar = {
             TopAppBar(
-                title = { Text("Wack-A-Mole") },
+                title = { Text("Wack-A-Mole", color = TextColor) },
                 actions = {
                     IconButton(onClick = { navController.navigate("settings") }) {
-                        Text("⚙")
+                        Text("⚙", color = TextColor)
                     }
                 }
             )
@@ -136,14 +146,14 @@ fun GameScreen(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Score: $score")
-                Text("Time: $remainingTime")
+                Text("Score: $score", color = TextColor)
+                Text("Time: $remainingTime", color = TextColor)
             }
 
             Spacer(Modifier.height(8.dp))
 
             // High score
-            Text("High score: $highScore")
+            Text("High score: $highScore", color = TextColor)
 
             Spacer(Modifier.height(20.dp))
 
@@ -170,9 +180,21 @@ fun GameScreen(navController: NavHostController) {
                         },
                         enabled = gameRunning,  // keep holes enabled, no flashing (prevents epilepsy)
                         modifier = Modifier.size(80.dp),
-                        shape = CircleShape
+                        shape = CircleShape,
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = HoleColor,
+                            disabledContainerColor = HoleColor
+                        )
                     ) {
-                        Text(label)
+                        if (isMoleVisible) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.mole),
+                                contentDescription = "Mole",
+                                tint = Color.Unspecified,   // keeps PNG's original colour
+                                modifier = Modifier.size(60.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -181,7 +203,7 @@ fun GameScreen(navController: NavHostController) {
 
             // Game over message (shown only when time reaches 0)
             if (gameOver) {
-                Text("Game over! Final score: $score")
+                Text("Game over! Final score: $score", color = TextColor)
                 Spacer(Modifier.height(12.dp))
             }
 
@@ -194,8 +216,13 @@ fun GameScreen(navController: NavHostController) {
                 gameRunning = true
                 moleIndex = Random.nextInt(0, 9) // show mole immediately at start
                 moleWhacked = false
-            }) {
-                Text(if (!gameRunning && !gameOver) "Start" else "Restart")
+            },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ButtonColor,
+                    contentColor = ButtonTextColor
+                )
+            ) {
+                Text(if (!gameRunning && !gameOver) "Start" else "Restart", color = ButtonTextColor)
             }
         }
     }
@@ -209,9 +236,9 @@ fun SettingsScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text("Settings", color = TextColor) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) { Text("←") }
+                    IconButton(onClick = { navController.popBackStack() }) { Text("←", color = TextColor) }
                 }
             )
         }
@@ -224,10 +251,16 @@ fun SettingsScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
         ) {
-            Text("Settings")
+            Text("Settings", color = TextColor)
             Spacer(Modifier.height(16.dp))
 
-            Button(onClick = { saveHighScore(context, 0) }) {
+            Button(
+                onClick = { saveHighScore(context, 0) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ButtonColor,
+                    contentColor = ButtonTextColor
+                )
+            ) {
                 Text("Reset High Score")
             }
         }
