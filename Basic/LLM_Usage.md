@@ -46,8 +46,10 @@ LaunchedEffect(Unit) {
         remainingTime-- // keeps counting even when game not started
     }
 }
+```
 
 Code snippet (Corrected code, after):
+```kotlin
 var remainingTime by remember { mutableIntStateOf(30) }
 var gameRunning by remember { mutableStateOf(false) }
 var gameOver by remember { mutableStateOf(false) }
