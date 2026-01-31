@@ -36,7 +36,7 @@ Use a LaunchedEffect(gameRunning) coroutine loop that ticks every 1 second.
 Update remainingTime, and when it reaches 0, stop the game and trigger game-over state. 
 LaunchedEffect automatically cancels when gameRunning becomes false.
 
-Code snippet (Mine, before): (example of wrong approach — timer never stops / keeps restarting)
+Code snippet (Mine, before): (example of wrong approach - timer never stops / keeps restarting)
 ```kotlin
 var remainingTime by remember { mutableIntStateOf(30) }
 
@@ -89,7 +89,7 @@ Response:
 Use context.getSharedPreferences() to save an integer high score. Read it at start, 
 and write it when the game ends if the current score is higher.
 
-Code snippet (Mine, before): (example of wrong approach — high score resets whenever app restarts)
+Code snippet (Mine, before): (example of wrong approach - high score resets whenever app restarts)
 ```kotlin
 var highScore by remember { mutableIntStateOf(0) }
 
@@ -146,7 +146,7 @@ Common cause: the button becomes enabled/disabled or changes colors/ripple on ev
 which triggers visible UI transitions. Fix by avoiding rapid enabled/disabled toggles per button, 
 and avoid changing styles unnecessarily. Keep holes enabled during gameplay and gate scoring inside onClick.
 
-Code snippet (Mine, before): (example of wrong approach — toggling enabled makes UI flicker)
+Code snippet (Mine, before): (example of wrong approach - toggling enabled makes UI flicker)
 ```kotlin
 Button(
     enabled = (index == moleIndex), // only mole hole enabled
@@ -204,7 +204,7 @@ Response:
 Add a boolean state like moleWhacked. When the mole is tapped once, set it to true so the mole 
 disappears and additional taps don’t score. Reset moleWhacked = false when a new mole appears.
 
-Code snippet (Mine, before): (example of wrong approach — spam tapping scores repeatedly)
+Code snippet (Mine, before): (example of wrong approach - spam tapping scores repeatedly)
 ```kotlin
 val isMoleVisible = (index == moleIndex)
 
