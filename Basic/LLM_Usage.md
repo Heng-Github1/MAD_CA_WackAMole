@@ -255,3 +255,14 @@ What were the key takeaways or lessons learnt in each of these areas stated:
 - In fast-tap games, you need a “one-hit per spawn” mechanism
 - Use a simple state flag to control scoring and visibility
 - Reset gameplay flags when the next round/spawn begins
+
+
+## Asset References
+
+### Mole Character Image
+- Asset: Mole character PNG used in the Whack-A-Mole game
+- Source: Pikbest
+- Title: *Mole character that comes out of*
+- URL: https://pikbest.com/png-images/mole-character-that-comes-out-of_9287520.html
+- License: Free use with attribution (as required by Pikbest for free users)
+- Usage: Educational, non-commercial coursework submission for Mobile App Development
